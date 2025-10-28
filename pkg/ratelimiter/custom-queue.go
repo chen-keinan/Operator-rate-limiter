@@ -18,8 +18,7 @@ func NewCustomQueue(rateLimiter *CustomRateLimiter) *CustomQueue {
 }
 
 func (q *CustomQueue) AddRateLimited(item reconcile.Request) {
-	numRequeues := q.rateLimiter.NumRequeues(item)
-	if numRequeues >= q.rateLimiter.maxRetries {
+	if q.rateLimiter.NumRequeues(item) >= q.rateLimiter.maxRetries {
 		q.done(item)
 		return
 	}
