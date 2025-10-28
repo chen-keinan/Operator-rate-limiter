@@ -7,18 +7,20 @@ import (
 
 type CustomQueue struct {
 	workqueue.TypedRateLimitingInterface[reconcile.Request]
-	rateLimiter *CustomRateLimiter
+	rateLimiter workqueue.TypedRateLimiter[reconcile.Request]
+	maxRetries  int
 }
 
-func NewCustomQueue(rateLimiter *CustomRateLimiter) *CustomQueue {
+func NewCustomQueue(rateLimiter workqueue.TypedRateLimiter[reconcile.Request], maxRetries int) *CustomQueue {
 	return &CustomQueue{
 		TypedRateLimitingInterface: workqueue.NewTypedRateLimitingQueue(rateLimiter),
 		rateLimiter:                rateLimiter,
+		maxRetries:                 maxRetries,
 	}
 }
 
 func (q *CustomQueue) AddRateLimited(item reconcile.Request) {
-	if q.rateLimiter.NumRequeues(item) >= q.rateLimiter.maxRetries {
+	if q.NumRequeues(item) >= q.maxRetries {
 		q.done(item)
 		return
 	}

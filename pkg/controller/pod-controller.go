@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"operator-rate-limiter/pkg/ratelimiter"
 
@@ -53,8 +54,9 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 func NewRateLimitingQueue(maxRetries, baseDelay, maxDelay int) func(string, workqueue.TypedRateLimiter[reconcile.Request]) workqueue.TypedRateLimitingInterface[reconcile.Request] {
 	return func(name string, _ workqueue.TypedRateLimiter[reconcile.Request]) workqueue.TypedRateLimitingInterface[reconcile.Request] {
-		rateLimiter := ratelimiter.NewCustomRateLimiter(baseDelay, maxDelay, maxRetries)
-
-		return ratelimiter.NewCustomQueue(rateLimiter)
+		rateLimiter := workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](
+			time.Duration(baseDelay)*time.Second, time.Duration(maxDelay)*time.Second,
+		)
+		return ratelimiter.NewCustomQueue(rateLimiter, maxRetries)
 	}
 }
