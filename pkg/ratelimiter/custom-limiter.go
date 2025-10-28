@@ -14,29 +14,22 @@ type MaxRetryHandler func(req reconcile.Request, retries int)
 type CustomRateLimiter struct {
 	inner      workqueue.TypedRateLimiter[reconcile.Request]
 	maxRetries int
-	onMaxRetry MaxRetryHandler
 }
 
 func NewCustomRateLimiter(
 	base, maxDelaySeconds int,
 	maxRetries int,
-	onMaxRetry MaxRetryHandler,
-) workqueue.TypedRateLimiter[reconcile.Request] {
+) *CustomRateLimiter {
 
 	return &CustomRateLimiter{
 		inner: workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](
 			time.Duration(base)*time.Second, time.Duration(maxDelaySeconds)*time.Second,
 		),
 		maxRetries: maxRetries,
-		onMaxRetry: onMaxRetry,
 	}
 }
 
 func (r *CustomRateLimiter) When(item reconcile.Request) time.Duration {
-	retries := r.NumRequeues(item)
-	if retries >= r.maxRetries && r.onMaxRetry != nil {
-		r.onMaxRetry(item, retries)
-	}
 	return r.inner.When(item)
 }
 
