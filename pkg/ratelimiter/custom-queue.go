@@ -34,7 +34,6 @@ func (q *CustomQueue) Forget(item reconcile.Request) {
 }
 
 func (q *CustomQueue) done(item reconcile.Request) {
-	q.rateLimiter.Forget(item)
 	q.TypedRateLimitingInterface.Forget(item)
 	q.TypedRateLimitingInterface.Done(item)
 }
